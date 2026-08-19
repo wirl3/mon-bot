@@ -175,7 +175,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         };
 
         await ticketChannel.send({
-          content: `<@${user.id}> <@&1539624340491075604>`,
+          content: `<@${user.id}> <@1539624340491075604>`,
           embeds: [ticketEmbed],
           components: [row1],
         });
