@@ -443,6 +443,16 @@ client.on(Events.GuildMemberAdd, async (member) => {
   }
 
   try {
+    const rulesChannel = await client.channels.fetch('1538977086432088085');
+    if (rulesChannel?.isTextBased()) {
+      const msg = await rulesChannel.send(`<@${member.id}> Bienvenue ! Lis les règles et clique sur le bouton pour accéder au serveur. / Welcome! Read the rules and click the button to access the server.`);
+      setTimeout(() => msg.delete().catch(() => {}), 10000);
+    }
+  } catch (err) {
+    console.error('Erreur ping bienvenue:', err);
+  }
+
+  try {
     const logs = await client.channels.fetch(LOGS_CHANNEL);
     if (!logs?.isTextBased()) return;
     await logs.send({
