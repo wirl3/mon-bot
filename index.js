@@ -119,7 +119,79 @@ client.on(Events.InteractionCreate, async (interaction) => {
       return interaction.reply({ content: '📢 Join the voice channel at the scheduled time for the meetup!', ephemeral: true });
     }
 
-    if (interaction.customId === 'open_ticket' || interaction.customId === 'ouvrir_ticket') {
+    if (interaction.customId === 'open_ticket') {
+      const guild = interaction.guild;
+      const user = interaction.user;
+
+      const existing = guild.channels.cache.find(
+        ch => ch.name === `ticket-${user.username}` && ch.parentId === CATEGORY_TICKETS
+      );
+      if (existing) {
+        return interaction.reply({ content: `❌ You already have an open ticket: ${existing}`, ephemeral: true });
+      }
+
+      try {
+        const ticketChannel = await guild.channels.create({
+          name: `ticket-${user.username}`,
+          type: 0,
+          parent: CATEGORY_TICKETS,
+          permissionOverwrites: [
+            { id: guild.id, allow: '0', deny: '1024' },
+            { id: user.id, allow: '1024', deny: '0' },
+            { id: ROLE_MODERATEUR, allow: '1024', deny: '0' },
+          ],
+        });
+
+        const ticketEmbed = {
+          title: '📩 Ticket — ' + user.username,
+          description:
+            'Bienvenue dans ton ticket.\n' +
+            'Welcome to your ticket.\n\n' +
+            'Décris ton problème et un membre du staff te répondra.\n' +
+            'Describe your issue and a staff member will respond to you.\n\n' +
+            '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n' +
+            'Pour fermer ce ticket, clique sur le bouton ci-dessous.',
+          color: 0x000000,
+          footer: { text: 'By 6.3' },
+          timestamp: new Date().toISOString(),
+        };
+
+        const row1 = {
+          type: 1,
+          components: [
+            {
+              type: 2,
+              style: 3,
+              label: 'Claim',
+              custom_id: 'claim_ticket_' + ticketChannel.id,
+            },
+            {
+              type: 2,
+              style: 4,
+              label: 'Fermer / Close',
+              custom_id: 'close_ticket_' + user.id,
+            },
+          ],
+        };
+
+        await ticketChannel.send({
+          content: `<@${user.id}> <@1539624340491075604>`,
+          embeds: [ticketEmbed],
+          components: [row1],
+        });
+
+        ticketCreators.set(ticketChannel.id, user.id);
+
+        await interaction.reply({ content: `✅ Ticket created: ${ticketChannel}`, ephemeral: true });
+        console.log(`Ticket ouvert par ${user.username}`);
+      } catch (err) {
+        console.error(err);
+        await interaction.reply({ content: '❌ Error creating ticket.', ephemeral: true });
+      }
+      return;
+    }
+
+    if (interaction.customId === 'ouvrir_ticket') {
       const guild = interaction.guild;
       const user = interaction.user;
 
@@ -198,7 +270,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       }
 
       try {
-        await interaction.reply({ content: '🔒 Ticket fermé. Transcription en cours...', ephemeral: true });
+        await interaction.reply({ content: '🔒 Ticket fermé. Transcription en cours...' });
 
         const creatorId = ticketCreators.get(interaction.channel.id);
         ticketCreators.delete(interaction.channel.id);
