@@ -175,7 +175,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         };
 
         await ticketChannel.send({
-          content: `<@${user.id}> <@1539624340491075604>`,
+          content: `<@${user.id}> <@&1539624340491075604>`,
           embeds: [ticketEmbed],
           components: [row1],
         });
@@ -183,7 +183,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         ticketCreators.set(ticketChannel.id, user.id);
 
         await interaction.reply({ content: `✅ Ticket created: ${ticketChannel}`, ephemeral: true });
-        console.log(`Ticket ouvert par ${user.username}`);
+        console.log(`Ticket opened by ${user.username}`);
       } catch (err) {
         console.error(err);
         await interaction.reply({ content: '❌ Error creating ticket.', ephemeral: true });
@@ -247,7 +247,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         };
 
         await ticketChannel.send({
-          content: `<@${user.id}> <@1539624340491075604>`,
+          content: `<@${user.id}> <@&1539624340491075604>`,
           embeds: [ticketEmbed],
           components: [row1],
         });
