@@ -1,6 +1,14 @@
 import 'dotenv/config';
+import { createServer } from 'node:http';
 import { Client, GatewayIntentBits, REST, Routes, Events, PermissionFlagsBits, AttachmentBuilder } from 'discord.js';
 import { readFileSync } from 'node:fs';
+
+const httpServer = createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('Bot is alive!');
+});
+const PORT = process.env.PORT || 3000;
+httpServer.listen(PORT, () => console.log(`HTTP server running on port ${PORT}`));
 
 const TOKEN = process.env.DISCORD_TOKEN;
 const ROLE_MODERATEUR = '1538977207567913030';
@@ -9,6 +17,8 @@ const ROLE_NON_VERIFIE = '1539096315907280996';
 const CATEGORY_TICKETS = '1539075873729417246';
 const LOGS_CHANNEL = '1539076460273344532';
 const GUILD_ID = '1538977085282984017';
+
+const ticketCreators = new Map();
 
 if (!TOKEN || TOKEN === 'COLLE_TON_TOKEN_ICI') {
   console.error('Erreur : mets ton token dans le fichier .env');
@@ -146,21 +156,31 @@ client.on(Events.InteractionCreate, async (interaction) => {
           timestamp: new Date().toISOString(),
         };
 
-        const closeRow = {
+        const row1 = {
           type: 1,
-          components: [{
-            type: 2,
-            style: 4,
-            label: 'Fermer le ticket / Close ticket',
-            custom_id: 'close_ticket_' + user.id,
-          }],
+          components: [
+            {
+              type: 2,
+              style: 3,
+              label: 'Claim',
+              custom_id: 'claim_ticket_' + ticketChannel.id,
+            },
+            {
+              type: 2,
+              style: 4,
+              label: 'Fermer / Close',
+              custom_id: 'close_ticket_' + user.id,
+            },
+          ],
         };
 
         await ticketChannel.send({
-          content: `<@${user.id}> <@&${ROLE_MODERATEUR}>`,
+          content: `<@${user.id}>`,
           embeds: [ticketEmbed],
-          components: [closeRow],
+          components: [row1],
         });
+
+        ticketCreators.set(ticketChannel.id, user.id);
 
         await interaction.reply({ content: `✅ Ticket créé : ${ticketChannel}`, ephemeral: true });
         console.log(`Ticket ouvert par ${user.username}`);
@@ -178,9 +198,86 @@ client.on(Events.InteractionCreate, async (interaction) => {
       }
 
       try {
-        await interaction.channel.send({ content: '<@&1539624340491075604> 🔒 Ticket fermé par **' + interaction.user.username + '**. Ce salon sera supprimé dans 5 secondes.' });
-        await interaction.reply({ content: '🔒 Ticket fermé.', ephemeral: true });
-        setTimeout(() => interaction.channel.delete().catch(() => {}), 5000);
+        await interaction.reply({ content: '🔒 Ticket fermé. Transcription en cours...', ephemeral: true });
+
+        const creatorId = ticketCreators.get(interaction.channel.id);
+        ticketCreators.delete(interaction.channel.id);
+
+        const messages = [];
+        let lastId;
+        while (true) {
+          const options = { limit: 100 };
+          if (lastId) options.before = lastId;
+          const fetched = await interaction.channel.messages.fetch(options);
+          if (fetched.size === 0) break;
+          fetched.forEach(m => messages.push(m));
+          lastId = fetched.last().id;
+        }
+        messages.reverse();
+
+        const transcriptLines = messages.map(m => {
+          const date = new Date(m.createdTimestamp).toLocaleString('fr-FR');
+          return `[${date}] ${m.author.username}: ${m.content || '(MBED/ATTACHMENT)'}`;
+        });
+
+        const header = `TRANSCRIPT — Ticket ${interaction.channel.name}\n` +
+          `Fermé par: ${interaction.user.username}\n` +
+          `Date: ${new Date().toLocaleString('fr-FR')}\n` +
+          `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+        const transcript = header + transcriptLines.join('\n');
+        const transcriptBuffer = Buffer.from(transcript, 'utf-8');
+
+        if (creatorId) {
+          try {
+            const dmUser = await client.users.fetch(creatorId);
+            await dmUser.send({
+              content: `📬 Voici la transcription de ton ticket **${interaction.channel.name}** :`,
+              files: [{
+                attachment: transcriptBuffer,
+                name: `transcript-${interaction.channel.name}.txt`,
+              }],
+            });
+          } catch (err) {
+            console.error('Erreur DM transcript:', err);
+          }
+        }
+
+        setTimeout(() => interaction.channel.delete().catch(() => {}), 3000);
+      } catch (err) {
+        console.error(err);
+      }
+      return;
+    }
+
+    if (interaction.customId.startsWith('claim_ticket_')) {
+      if (!hasModRole(interaction)) {
+        return interaction.reply({ content: '❌ Seul le staff peut claim un ticket.', ephemeral: true });
+      }
+
+      try {
+        const originalEmbed = interaction.message.embeds[0];
+        const channelId = interaction.channel.id;
+        const creatorId = ticketCreators.get(channelId) || '0';
+        await interaction.message.edit({
+          embeds: [{
+            title: originalEmbed.title,
+            description: originalEmbed.description,
+            color: originalEmbed.color,
+            footer: { text: `Claim par ${interaction.user.username}` },
+            timestamp: originalEmbed.timestamp,
+          }],
+          components: [{
+            type: 1,
+            components: [{
+              type: 2,
+              style: 4,
+              label: 'Fermer / Close',
+              custom_id: 'close_ticket_' + creatorId,
+            }],
+          }],
+        });
+        await interaction.reply({ content: `✅ Ticket claim par <@${interaction.user.id}>.`, ephemeral: false });
+        console.log(`Ticket claim par ${interaction.user.username}`);
       } catch (err) {
         console.error(err);
       }
