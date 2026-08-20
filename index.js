@@ -72,7 +72,7 @@ const guildCommands = [
   {
     name: 'stream',
     description: 'Annoncer un live TikTok dans le salon stream',
-    default_member_permissions: PermissionFlagsBits.Administrator.toString(),
+    default_member_permissions: '1539680874436501574',
     options: [
       {
         name: 'pseudo',
@@ -85,7 +85,7 @@ const guildCommands = [
   {
     name: 'fin-stream',
     description: 'Annoncer la fin d\'un live TikTok dans le salon stream',
-    default_member_permissions: PermissionFlagsBits.Administrator.toString(),
+    default_member_permissions: '1539680874436501574',
     options: [
       {
         name: 'pseudo',
@@ -460,7 +460,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 
   if (interaction.commandName === 'stream') {
-    if (!hasModRole(interaction)) {
+    if (!hasModRole(interaction) && !interaction.member.roles.cache.has('1539680874436501574')) {
       return interaction.reply({ content: '❌ Tu n\'as pas la permission.', ephemeral: true });
     }
 
@@ -517,7 +517,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 
   if (interaction.commandName === 'fin-stream') {
-    if (!hasModRole(interaction)) {
+    if (!hasModRole(interaction) && !interaction.member.roles.cache.has('1539680874436501574')) {
       return interaction.reply({ content: '❌ Tu n\'as pas la permission.', ephemeral: true });
     }
 
