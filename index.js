@@ -82,6 +82,19 @@ const guildCommands = [
       },
     ],
   },
+  {
+    name: 'fin-stream',
+    description: 'Annoncer la fin d\'un live TikTok dans le salon stream',
+    default_member_permissions: PermissionFlagsBits.Administrator.toString(),
+    options: [
+      {
+        name: 'pseudo',
+        description: 'Pseudo TikTok (sans @)',
+        type: 3,
+        required: true,
+      },
+    ],
+  },
 ];
 
 function hasModRole(interaction) {
@@ -497,6 +510,45 @@ client.on(Events.InteractionCreate, async (interaction) => {
       await salon.send({ embeds: [embed], components: [row], files: [tiktokFile, crownFile] });
       await interaction.reply({ content: `✅ Embed stream envoyé dans ${salon} !`, ephemeral: true });
       console.log(`Embed stream envoyé par ${interaction.user.username}`);
+    } catch (err) {
+      console.error(err);
+      await interaction.reply({ content: '❌ Erreur lors de l\'envoi.', ephemeral: true });
+    }
+  }
+
+  if (interaction.commandName === 'fin-stream') {
+    if (!hasModRole(interaction)) {
+      return interaction.reply({ content: '❌ Tu n\'as pas la permission.', ephemeral: true });
+    }
+
+    const pseudo = interaction.options.getString('pseudo');
+    const salon = interaction.options.getChannel('salon') || await client.channels.fetch('1539075236367048894');
+    const tiktokLogo = readFileSync('./assets/tiktok.png');
+    const crownLogo = readFileSync('./assets/crown.png');
+    const LINK_EMOJI = '<:link:1539094130305671198>';
+
+    const embed = {
+      title: `${LINK_EMOJI} Le live de ${pseudo} est terminé !`,
+      description:
+        `Le live TikTok de **${pseudo}` + ` est maintenant terminé.\n` +
+        `**${pseudo}'s** TikTok live is now over.\n\n` +
+        `Merci d'avoir participé ! / Thanks for joining!`,
+      color: 0x808080,
+      thumbnail: { url: 'attachment://tiktok.png' },
+      footer: {
+        text: '6.3 Drivers - Streams',
+        icon_url: 'attachment://crown.png',
+      },
+      timestamp: new Date().toISOString(),
+    };
+
+    const tiktokFile = new AttachmentBuilder(tiktokLogo, { name: 'tiktok.png' });
+    const crownFile = new AttachmentBuilder(crownLogo, { name: 'crown.png' });
+
+    try {
+      await salon.send({ embeds: [embed], files: [tiktokFile, crownFile] });
+      await interaction.reply({ content: `✅ Embed fin de stream envoyé dans ${salon} !`, ephemeral: true });
+      console.log(`Embed fin-stream envoyé par ${interaction.user.username}`);
     } catch (err) {
       console.error(err);
       await interaction.reply({ content: '❌ Erreur lors de l\'envoi.', ephemeral: true });
