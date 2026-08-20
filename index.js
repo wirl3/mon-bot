@@ -530,7 +530,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     const embed = {
       title: `${LINK_EMOJI} Le live de ${pseudo} est terminé !`,
       description:
-        `Le live TikTok de **${pseudo}` + ` est maintenant terminé.\n` +
+        `Le live TikTok de **${pseudo}** est maintenant terminé.\n` +
         `**${pseudo}'s** TikTok live is now over.\n\n` +
         `Merci d'avoir participé ! / Thanks for joining!`,
       color: 0x808080,
