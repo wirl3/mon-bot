@@ -322,7 +322,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
 
     if (interaction.customId.startsWith('claim_ticket_')) {
-      if (!hasModRole(interaction)) {
+      if (!hasModRole(interaction) && !interaction.member.roles.cache.has('1539624340491075604')) {
         return interaction.reply({ content: '❌ Seul le staff peut claim un ticket.', ephemeral: true });
       }
 
