@@ -69,6 +69,19 @@ const guildCommands = [
       },
     ],
   },
+  {
+    name: 'stream',
+    description: 'Annoncer un live TikTok dans le salon stream',
+    default_member_permissions: PermissionFlagsBits.Administrator.toString(),
+    options: [
+      {
+        name: 'pseudo',
+        description: 'Pseudo TikTok (sans @)',
+        type: 3,
+        required: true,
+      },
+    ],
+  },
 ];
 
 function hasModRole(interaction) {
@@ -427,6 +440,63 @@ client.on(Events.InteractionCreate, async (interaction) => {
       await salon.send({ embeds: [embed], files: [file] });
       await interaction.reply({ content: `✅ Embed meetups envoyé dans ${salon} !`, ephemeral: true });
       console.log(`Embed meetups envoyé par ${interaction.user.username}`);
+    } catch (err) {
+      console.error(err);
+      await interaction.reply({ content: '❌ Erreur lors de l\'envoi.', ephemeral: true });
+    }
+  }
+
+  if (interaction.commandName === 'stream') {
+    if (!hasModRole(interaction)) {
+      return interaction.reply({ content: '❌ Tu n\'as pas la permission.', ephemeral: true });
+    }
+
+    const pseudo = interaction.options.getString('pseudo');
+    const salon = interaction.options.getChannel('salon') || await client.channels.fetch('1539075236367048894');
+    const tiktokLogo = readFileSync('C:/Users/wizox/Downloads/png-logo-tiktok-removebg-preview.png');
+    const crownLogo = readFileSync('C:/Users/wizox/Downloads/zarek.63__2_-removebg-preview.png');
+    const LINK_EMOJI = '<:link:1539094130305671198>';
+
+    const embed = {
+      title: `${LINK_EMOJI} ${pseudo} est en live !`,
+      description:
+        `Rejoins le live TikTok de **${pseudo}** !\n` +
+        `Join **${pseudo}**'s TikTok live!\n\n` +
+        `Lien du live : [TikTok Live](https://www.tiktok.com/@${pseudo}/live)`,
+      color: 0x808080,
+      thumbnail: { url: 'attachment://tiktok.png' },
+      footer: {
+        text: '6.3 Drivers - Streams',
+        icon_url: 'attachment://crown.png',
+      },
+      timestamp: new Date().toISOString(),
+    };
+
+    const row = {
+      type: 1,
+      components: [
+        {
+          type: 2,
+          style: 5,
+          label: 'Accéder au profil',
+          url: `https://www.tiktok.com/@${pseudo}`,
+        },
+        {
+          type: 2,
+          style: 5,
+          label: 'Rejoindre le live',
+          url: `https://www.tiktok.com/@${pseudo}/live`,
+        },
+      ],
+    };
+
+    const tiktokFile = new AttachmentBuilder(tiktokLogo, { name: 'tiktok.png' });
+    const crownFile = new AttachmentBuilder(crownLogo, { name: 'crown.png' });
+
+    try {
+      await salon.send({ embeds: [embed], components: [row], files: [tiktokFile, crownFile] });
+      await interaction.reply({ content: `✅ Embed stream envoyé dans ${salon} !`, ephemeral: true });
+      console.log(`Embed stream envoyé par ${interaction.user.username}`);
     } catch (err) {
       console.error(err);
       await interaction.reply({ content: '❌ Erreur lors de l\'envoi.', ephemeral: true });
