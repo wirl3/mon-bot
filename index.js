@@ -411,7 +411,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
 
     const salon = interaction.options.getChannel('salon') || interaction.channel;
-    const logo = readFileSync('C:/Users/wizox/Downloads/zarek.63__2_-removebg-preview.png');
+    const logo = readFileSync('./assets/crown.png');
 
     const embed = {
       title: '<:6_32:1539072485817974794> ・ MEETUPS',
@@ -453,8 +453,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     const pseudo = interaction.options.getString('pseudo');
     const salon = interaction.options.getChannel('salon') || await client.channels.fetch('1539075236367048894');
-    const tiktokLogo = readFileSync('C:/Users/wizox/Downloads/png-logo-tiktok-removebg-preview.png');
-    const crownLogo = readFileSync('C:/Users/wizox/Downloads/zarek.63__2_-removebg-preview.png');
+    const tiktokLogo = readFileSync('./assets/tiktok.png');
+    const crownLogo = readFileSync('./assets/crown.png');
     const LINK_EMOJI = '<:link:1539094130305671198>';
 
     const embed = {
